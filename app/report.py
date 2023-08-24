@@ -10,10 +10,10 @@ def isAutomation(taskKey):
     return taskKey.startswith("SEL-")
 
 def isTaskDone(status):
-    return status in ["DONE", "Awaiting Release", "Released on Prod", "Pending For Release", "Rejected"]
+    return status in ["DONE", "Awaiting Release", "Released on Prod", "Pending For Release", "Ready For Release", "Rejected"]
 
 def isTaskReleased(status):
-    return status in ["DONE", "Released on Prod"]
+    return status in ["DONE", "Released on Prod", "Ready For Release"]
 
 def getAllTasks(contents):
     return contents['completedIssues'] + contents['issuesNotCompletedInCurrentSprint'] + contents['puntedIssues'] + contents['issuesCompletedInAnotherSprint']
@@ -29,7 +29,10 @@ def calculateIndividualMetrics(allTasks, emergedTasksList):
     for task in allTasks:
         assigneeName = task['assigneeName']
         taskKey = task['key']
-        taskEffort = task['currentEstimateStatistic']['statFieldValue']['value']
+        try:
+            taskEffort = task['currentEstimateStatistic']['statFieldValue']['value']
+        except:
+            taskEffort = 0
         isDone = isTaskDone(task['statusName'])
 
         if assigneeName not in individualCommittedEffort:
@@ -97,7 +100,10 @@ def calculateTotalMetrics(allTasks, emergedTasksList):
     for task in allTasks:
         taskKey = task['key']
         taskType = task['typeName']
-        taskEffort = task['currentEstimateStatistic']['statFieldValue']['value']
+        try:
+            taskEffort = task['currentEstimateStatistic']['statFieldValue']['value']
+        except:
+            taskEffort = 0
         isDone = isTaskDone(task['statusName'])
         isReleased = isTaskReleased(task['statusName'])
 
@@ -253,6 +259,7 @@ def printReport(file):
         "Dev Done": devDone,
         "Dev Undone": devUndone,
         "Dev Released": devReleased,
+        "Shipping Efficiency (%)": devReleased / devCommited * 100 if devCommited > 0 else 0,
 
         "Sprint Goal Effort (%)": 0,
         "Number of Team Member Participation": 0,
